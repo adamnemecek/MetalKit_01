@@ -280,13 +280,13 @@
 				CODE_SIGN_ENTITLEMENTS = macOSMetal/macOSMetal.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 8M8SAX62V2;
+				DEVELOPMENT_TEAM = JL8K7LH7KS;
 				INFOPLIST_FILE = macOSMetal/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = cri.blog.macOSMetal;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ngrid.ngrid;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 			};
@@ -299,13 +299,13 @@
 				CODE_SIGN_ENTITLEMENTS = macOSMetal/macOSMetal.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 8M8SAX62V2;
+				DEVELOPMENT_TEAM = JL8K7LH7KS;
 				INFOPLIST_FILE = macOSMetal/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = cri.blog.macOSMetal;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ngrid.ngrid;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 			};

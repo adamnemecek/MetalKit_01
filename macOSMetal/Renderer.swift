@@ -13,17 +13,27 @@ struct Vertex {
     var color: float4
 }
 
-class Renderer: NSObject {
-    var commandQueue: MTLCommandQueue
-    var renderPipelineState: MTLRenderPipelineState
-    
-    var vertexBuffer: MTLBuffer
+extension MTLDevice {
+    func makeBuffer<T>(data: [T]) -> MTLBuffer? {
+        self.makeBuffer(
+            bytes: data,
+            length: MemoryLayout<T>.stride * data.count,
+            options: []
+        )
+    }
+}
 
-    var vertices: [Vertex] = [
-        Vertex(position: float3(0, 1, 0), color: float4(1, 0, 0, 1)),
-        Vertex(position: float3(-1, -1,     0), color: float4(0, 1, 0, 1)),
-        Vertex(position: float3(1, -1, 0), color: float4(0, 0, 1, 1))
-    ]
+let vertices: [Vertex] = [
+    Vertex(position: float3( 0,  1, 0), color: float4(1, 0, 0, 1)),
+    Vertex(position: float3(-1, -1, 0), color: float4(0, 1, 0, 1)),
+    Vertex(position: float3( 1, -1, 0), color: float4(0, 0, 1, 1))
+]
+
+class Renderer: NSObject {
+    let commandQueue: MTLCommandQueue
+    let renderPipelineState: MTLRenderPipelineState
+
+    let vertexBuffer: MTLBuffer
     
     init(device: MTLDevice) {
         guard let commandQueue = device.makeCommandQueue() else { fatalError() }
@@ -35,47 +45,42 @@ class Renderer: NSObject {
         // Our fragment function name
         let fragmentFunction = library.makeFunction(name: "basic_fragment_function")
         // Create basic descriptor
-        let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
+        let rpd = MTLRenderPipelineDescriptor()
         // Attach the pixel format that si the same as the MetalView
-        renderPipelineDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        rpd.colorAttachments[0].pixelFormat = .bgra8Unorm
         // Attach the shader functions
-        renderPipelineDescriptor.vertexFunction = vertexFunction
-        renderPipelineDescriptor.fragmentFunction = fragmentFunction
+        rpd.vertexFunction = vertexFunction
+        rpd.fragmentFunction = fragmentFunction
         // Try to update the state of the renderPipeline
         do {
-            self.renderPipelineState = try device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
+            self.renderPipelineState = try device.makeRenderPipelineState(descriptor: rpd)
         } catch {
             fatalError(error.localizedDescription)
         }
 
-        guard let buffer = device.makeBuffer(
-            bytes: self.vertices,
-            length: MemoryLayout<Vertex>.stride * self.vertices.count,
-            options: []
-        ) else { fatalError() }
+        guard let buffer = device.makeBuffer(data: vertices) else { fatalError() }
 
         self.vertexBuffer = buffer
 
         super.init()
-
-
     }
 }
 
 extension Renderer: MTKViewDelegate {
-    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
-    
+    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+
+    }
+
     func draw(in view: MTKView) {
         // Get the current drawable and descriptor
         guard let drawable = view.currentDrawable,
-            let renderPassDescriptor = view.currentRenderPassDescriptor else {
-                return
+              let renderPassDescriptor = view.currentRenderPassDescriptor,
+              let commandBuffer = self.commandQueue.makeCommandBuffer(),
+              let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else {
+            return
         }
         // Create a buffer from the commandQueue
-        guard let commandBuffer = self.commandQueue.makeCommandBuffer() else { fatalError() }
-        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else {
-            fatalError()
-        }
+
 
         encoder.setRenderPipelineState(self.renderPipelineState)
         // Pass in the vertexBuffer into index 0
@@ -84,7 +89,7 @@ extension Renderer: MTKViewDelegate {
         encoder.drawPrimitives(
             type: .triangle,
             vertexStart: 0,
-            vertexCount: self.vertices.count
+            vertexCount: vertices.count
         )
         
         encoder.endEncoding()

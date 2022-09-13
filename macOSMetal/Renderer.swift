@@ -29,17 +29,18 @@ let vertices: [Vertex] = [
     Vertex(position: float3( 1, -1, 0), color: float4(0, 0, 1, 1))
 ]
 
-class Renderer: NSObject {
+final class Renderer: NSObject {
     let commandQueue: MTLCommandQueue
     let renderPipelineState: MTLRenderPipelineState
 
     let vertexBuffer: MTLBuffer
-    
+
     init(device: MTLDevice) {
         guard let commandQueue = device.makeCommandQueue() else { fatalError() }
+        guard let library = device.makeDefaultLibrary() else { fatalError() }
+
         self.commandQueue = commandQueue
 
-        guard let library = device.makeDefaultLibrary() else { fatalError() }
         // Our vertex function name
         let vertexFunction = library.makeFunction(name: "basic_vertex_function")
         // Our fragment function name
@@ -91,7 +92,7 @@ extension Renderer: MTKViewDelegate {
             vertexStart: 0,
             vertexCount: vertices.count
         )
-        
+
         encoder.endEncoding()
         commandBuffer.present(drawable)
         commandBuffer.commit()

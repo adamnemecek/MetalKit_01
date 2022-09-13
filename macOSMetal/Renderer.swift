@@ -26,18 +26,7 @@ class Renderer: NSObject {
     
     init(device: MTLDevice) {
         super.init()
-        createCommandQueue(device: device)
-        createPipelineState(device: device)
-        createBuffers(device: device)
-    }
-    
-    //MARK: Builders
-    func createCommandQueue(device: MTLDevice) {
-        commandQueue = device.makeCommandQueue()
-    }
-    
-    func createPipelineState(device: MTLDevice) {
-        // The device will make a library for us
+        self.commandQueue = device.makeCommandQueue()
         let library = device.makeDefaultLibrary()
         // Our vertex function name
         let vertexFunction = library?.makeFunction(name: "basic_vertex_function")
@@ -52,16 +41,16 @@ class Renderer: NSObject {
         renderPipelineDescriptor.fragmentFunction = fragmentFunction
         // Try to update the state of the renderPipeline
         do {
-            renderPipelineState = try device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
+            self.renderPipelineState = try device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
         } catch {
             print(error.localizedDescription)
         }
-    }
-    
-    func createBuffers(device: MTLDevice) {
-        vertexBuffer = device.makeBuffer(bytes: vertices,
-                                         length: MemoryLayout<Vertex>.stride * vertices.count,
-                                         options: [])
+
+        self.vertexBuffer = device.makeBuffer(
+            bytes: self.vertices,
+            length: MemoryLayout<Vertex>.stride * self.vertices.count,
+            options: []
+        )
     }
 }
 
@@ -75,7 +64,7 @@ extension Renderer: MTKViewDelegate {
                 return
         }
         // Create a buffer from the commandQueue
-        let commandBuffer = commandQueue.makeCommandBuffer()
+        let commandBuffer = self.commandQueue.makeCommandBuffer()
         let commandEncoder = commandBuffer?.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         commandEncoder?.setRenderPipelineState(renderPipelineState)
         // Pass in the vertexBuffer into index 0

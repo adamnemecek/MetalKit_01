@@ -14,24 +14,26 @@ struct Vertex {
 }
 
 class Renderer: NSObject {
-    var commandQueue: MTLCommandQueue!
-    var renderPipelineState: MTLRenderPipelineState!
+    var commandQueue: MTLCommandQueue
+    var renderPipelineState: MTLRenderPipelineState
     
-    var vertexBuffer: MTLBuffer!
+    var vertexBuffer: MTLBuffer
+
     var vertices: [Vertex] = [
-        Vertex(position: float3(0,1,0), color: float4(1,0,0,1)),
-        Vertex(position: float3(-1,-1,0), color: float4(0,1,0,1)),
-        Vertex(position: float3(1,-1,0), color: float4(0,0,1,1))
+        Vertex(position: float3(0, 1, 0), color: float4(1, 0, 0, 1)),
+        Vertex(position: float3(-1, -1,     0), color: float4(0, 1, 0, 1)),
+        Vertex(position: float3(1, -1, 0), color: float4(0, 0, 1, 1))
     ]
     
     init(device: MTLDevice) {
-        super.init()
-        self.commandQueue = device.makeCommandQueue()
-        let library = device.makeDefaultLibrary()
+        guard let commandQueue = device.makeCommandQueue() else { fatalError() }
+        self.commandQueue = commandQueue
+
+        guard let library = device.makeDefaultLibrary() else { fatalError() }
         // Our vertex function name
-        let vertexFunction = library?.makeFunction(name: "basic_vertex_function")
+        let vertexFunction = library.makeFunction(name: "basic_vertex_function")
         // Our fragment function name
-        let fragmentFunction = library?.makeFunction(name: "basic_fragment_function")
+        let fragmentFunction = library.makeFunction(name: "basic_fragment_function")
         // Create basic descriptor
         let renderPipelineDescriptor = MTLRenderPipelineDescriptor()
         // Attach the pixel format that si the same as the MetalView
@@ -43,14 +45,20 @@ class Renderer: NSObject {
         do {
             self.renderPipelineState = try device.makeRenderPipelineState(descriptor: renderPipelineDescriptor)
         } catch {
-            print(error.localizedDescription)
+            fatalError(error.localizedDescription)
         }
 
-        self.vertexBuffer = device.makeBuffer(
+        guard let buffer = device.makeBuffer(
             bytes: self.vertices,
             length: MemoryLayout<Vertex>.stride * self.vertices.count,
             options: []
-        )
+        ) else { fatalError() }
+
+        self.vertexBuffer = buffer
+
+        super.init()
+
+
     }
 }
 
@@ -64,16 +72,23 @@ extension Renderer: MTKViewDelegate {
                 return
         }
         // Create a buffer from the commandQueue
-        let commandBuffer = self.commandQueue.makeCommandBuffer()
-        let commandEncoder = commandBuffer?.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
-        commandEncoder?.setRenderPipelineState(renderPipelineState)
+        guard let commandBuffer = self.commandQueue.makeCommandBuffer() else { fatalError() }
+        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else {
+            fatalError()
+        }
+
+        encoder.setRenderPipelineState(self.renderPipelineState)
         // Pass in the vertexBuffer into index 0
-        commandEncoder?.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+        encoder.setVertexBuffer(self.vertexBuffer, offset: 0, index: 0)
         // Draw primitive at vertextStart 0
-        commandEncoder?.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertices.count)
+        encoder.drawPrimitives(
+            type: .triangle,
+            vertexStart: 0,
+            vertexCount: self.vertices.count
+        )
         
-        commandEncoder?.endEncoding()
-        commandBuffer?.present(drawable)
-        commandBuffer?.commit()
+        encoder.endEncoding()
+        commandBuffer.present(drawable)
+        commandBuffer.commit()
     }
 }
